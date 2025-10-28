@@ -8,7 +8,7 @@ import type {
   PromoValidationResponse,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 class ApiService {
   private client: AxiosInstance;
@@ -23,7 +23,9 @@ class ApiService {
     });
 
     this.client.interceptors.response.use(
-      (response) => response.data,
+      (response) => {
+        return response.data?.data || response.data;
+      },
       (error: AxiosError) => {
         const message = 
           (error.response?.data as any)?.error || 
@@ -39,40 +41,34 @@ class ApiService {
 
   // Get all experiences
   async getExperiences(): Promise<Experience[]> {
-    const response = await this.client.get('/experiences');
-    return response.data;
+    return await this.client.get('/experiences');
   }
 
   // Get single experience with slots
   async getExperienceById(id: string): Promise<ExperienceWithSlots> {
-    const response = await this.client.get(`/experiences/${id}`);
-    return response.data;
+    return await this.client.get(`/experiences/${id}`);
   }
 
   // Get slots for an experience
   async getExperienceSlots(id: string, date?: string): Promise<Slot[]> {
-    const response = await this.client.get(`/experiences/${id}/slots`, {
+    return await this.client.get(`/experiences/${id}/slots`, {
       params: date ? { date } : {},
     });
-    return response.data;
   }
 
   // Validate promo code
   async validatePromoCode(code: string, amount?: number): Promise<PromoValidationResponse> {
-    const response = await this.client.post('/promo/validate', { code, amount });
-    return response.data;
+    return await this.client.post('/promo/validate', { code, amount });
   }
 
   // Create booking
   async createBooking(payload: BookingPayload): Promise<BookingResponse> {
-    const response = await this.client.post('/bookings', payload);
-    return response.data;
+    return await this.client.post('/bookings', payload);
   }
 
   // Get booking by reference ID
   async getBooking(referenceId: string): Promise<BookingResponse> {
-    const response = await this.client.get(`/bookings/${referenceId}`);
-    return response.data;
+    return await this.client.get(`/bookings/${referenceId}`);
   }
 }
 
