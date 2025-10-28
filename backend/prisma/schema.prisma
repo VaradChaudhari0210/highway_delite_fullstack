@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Experience {
+  id               String    @id @default(cuid())
+  title            String
+  location         String
+  description      String    @db.Text
+  shortDescription String    @db.Text
+  price            Float
+  imageUrl         String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  slots            Slot[]
+  bookings         Booking[]
+  
+  @@map("experiences")
+}
+
+model Slot {
+  id             String    @id @default(cuid())
+  experienceId   String
+  date           DateTime
+  time           String
+  totalSlots     Int
+  availableSlots Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  experience     Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
+  
+  @@unique([experienceId, date, time])
+  @@map("slots")
+}
+
+model Booking {
+  id           String   @id @default(cuid())
+  experienceId String
+  slotId       String
+  fullName     String
+  email        String
+  quantity     Int
+  subtotal     Float
+  taxes        Float
+  discount     Float    @default(0)
+  total        Float
+  promoCode    String?
+  referenceId  String   @unique
+  status       BookingStatus @default(CONFIRMED)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  experience   Experience @relation(fields: [experienceId], references: [id])
+  slot         Slot      @relation(fields: [slotId], references: [id])
+  
+  @@map("bookings")
+}
+
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  type        PromoType
+  value       Float
+  isActive    Boolean  @default(true)
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("promo_codes")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  FAILED
+}
+
+enum PromoType {
+  PERCENTAGE
+  FIXED
+}
